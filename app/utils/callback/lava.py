@@ -15,6 +15,8 @@ import errno
 import models
 import os
 import yaml
+import pickle
+import json
 
 import utils
 import utils.boot
@@ -257,6 +259,46 @@ def _add_boot_log(meta, job_log, base_path, name):
         utils.lava_log_parser.run(log, meta, txt, html)
 
 
+def store_raw_json(job_data, doc_id, base_path=utils.BASE_PATH):
+    """Save raw json from LAVA v2 callbacks
+
+    Save LAVA v2 callback data as json file. Remove sensitive information
+    such as tokens.
+
+    :param job_data: The JSON data from the callback.
+    :type job_data: dict
+    :param doc_id: The document ID relative to the callback data.
+    :type doc_id: string
+    :param base_path: Path to the top-level directory where to store the files.
+    :type base_path: string
+    """
+
+    # Creating the file name and path to save to
+    job_definition = yaml.load(job_data["definition"], Loader=yaml.CLoader)
+    file_name = job_definition["job_name"] + ".json"
+    file_path = os.path.join(base_path, "json-raw", file_name)
+
+    utils.LOG.info("Saving raw LAVA v2 callback from job {} data in {}".format(
+        job_definition["job_name"],
+        base_path))
+
+    # Removing the token
+    job_data.pop("token", None)
+
+    # Adding the document ID
+    job_data["kci_id"] = doc_id
+
+    if not os.path.isdir(base_path):
+        try:
+            os.makedirs(base_path)
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise e
+
+    with open(file_path, "wb") as f:
+        f.write(json.dumps(job_data))
+
+
 def add_boot(job_data, lab_name, db_options, base_path=utils.BASE_PATH):
     """Entry point to be used as an external task.
 
@@ -311,6 +353,7 @@ def add_boot(job_data, lab_name, db_options, base_path=utils.BASE_PATH):
         if errors:
             raise utils.errors.BackendError(errors)
 
+    store_raw_json(job_data, doc_id)
     return doc_id
 
 
@@ -433,4 +476,5 @@ def add_tests(job_data, lab_name, db_options, base_path=utils.BASE_PATH):
             if errors:
                 raise utils.errors.BackendError(errors)
 
+    store_raw_json(job_data, suite_doc_id)
     return suite_doc_id
