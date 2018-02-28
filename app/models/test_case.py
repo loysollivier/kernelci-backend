@@ -146,6 +146,20 @@ class TestCaseDocument(mbase.BaseDocument):
         self._test_suite_id = value
 
     @property
+    def test_suite_name(self):
+        """The name of the associated test suite."""
+        return self.test_suite_name
+
+    @test_suite_name.setter
+    def test_suite_name(self, value):
+        """Set the associated test suite name.
+
+        :param value: The test suite name.
+        :type value: string
+        """
+        self.test_suite_name = value
+
+    @property
     def attachments(self):
         """The attachments associated with this test case."""
         return self._attachments

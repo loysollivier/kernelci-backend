@@ -244,7 +244,7 @@ def _update_test_case_doc_ids(ts_name, ts_id, case_doc, database):
     ts_oid = bson.objectid.ObjectId(ts_id)
     test_suite_doc = utils.db.find_one2(database[models.TEST_SUITE_COLLECTION],
                                         ts_oid,
-                                        [models.ID_KEY])
+                                        fields=[models.ID_KEY, models.NAME_KEY])
     # If exists, update the test case
     if test_suite_doc:
         case_doc.test_suite_name = test_suite_doc.get(models.NAME_KEY, None)
